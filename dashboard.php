@@ -81,61 +81,85 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
 
         <div class="task-list-wrapper">
             <h3>Your Tasks:</h3>
-            <ul id="task-list">
-                <?php
-                $stmt = $conn->prepare("SELECT id, title, description, is_done, created_at FROM tasks WHERE user_id = ? ORDER BY created_at DESC");
-                $stmt->bind_param("i", $_SESSION['user_id']);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                while ($row = $result->fetch_assoc()) {
-                    $checked = $row['is_done'] ? "checked" : "";
-                    $class = $row['is_done'] ? "task-completed" : "";
-                    $created_at = date('d.m.Y H:i', strtotime($row['created_at'])); // Nowy format daty
+            
+            <!-- Sekcja Niezrobionych Zadań -->
+            <div class="task-section">
+                <div class="section-header" onclick="toggleSection('pending')">
+                    <h4>Do zrobienia (<span id="pending-count">0</span>)</h4>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <ul id="pending-tasks" class="task-list">
+                    <?php
+                    $pending = $conn->prepare("SELECT id, title, description, is_done, created_at FROM tasks WHERE user_id = ? AND is_done = 0 ORDER BY created_at DESC");
+                    $pending->bind_param("i", $_SESSION['user_id']);
+                    $pending->execute();
+                    $pending_result = $pending->get_result();
                     
-                    echo "<li>
-                        <div class='task-item'>
-                            <!-- Tytuł i checkbox -->
-                            <div class='task-title-wrapper'>
-                                <input type='checkbox' class='task-checkbox' data-id='{$row['id']}' $checked>
-                                <span class='task-title $class'>" . htmlspecialchars($row['title']) . "</span>
-                            </div>
-
-                            <!-- Opis -->
-                            <div class='task-description $class'>
-                                " . nl2br(htmlspecialchars(substr($row['description'], 0, 255))) . "
-                            </div>
-
-                            <!-- Nowy kontener na dolną linię -->
-                            <div class='task-bottom-row'>
-                                <!-- Czas dodania -->
-                                <div class='task-time'>
-                                    <i class='far fa-clock'></i> $created_at
+                    while ($row = $pending_result->fetch_assoc()) {
+                        render_task_item($row);
+                    }
+                    $pending->close();
+                    ?>
+                </ul>
+            </div>
+            
+            <!-- Sekcja Zrobionych Zadań -->
+            <div class="task-section">
+                <div class="section-header" onclick="toggleSection('completed')">
+                    <h4>Zrobione (<span id="completed-count">0</span>)</h4>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <ul id="completed-tasks" class="task-list">
+                    <?php
+                    $completed = $conn->prepare("SELECT id, title, description, is_done, created_at FROM tasks WHERE user_id = ? AND is_done = 1 ORDER BY created_at DESC");
+                    $completed->bind_param("i", $_SESSION['user_id']);
+                    $completed->execute();
+                    $completed_result = $completed->get_result();
+                    
+                    while ($row = $completed_result->fetch_assoc()) {
+                        render_task_item($row);
+                    }
+                    $completed->close();
+                    
+                    function render_task_item($row) {
+                        $checked = $row['is_done'] ? "checked" : "";
+                        $class = $row['is_done'] ? "task-completed" : "";
+                        $created_at = date('d.m.Y H:i', strtotime($row['created_at']));
+                        
+                        echo "<li data-id='{$row['id']}'>
+                            <div class='task-item'>
+                                <div class='task-title-wrapper'>
+                                    <input type='checkbox' class='task-checkbox' data-id='{$row['id']}' $checked>
+                                    <span class='task-title $class'>" . htmlspecialchars($row['title']) . "</span>
                                 </div>
-                                
-                                <!-- Przyciski (zachowana prawa strona) -->
-                                <div class='task-buttons-right'>
-                                    <form method='get' action='edit_task.php'>
-                                        <input type='hidden' name='task_id' value='{$row['id']}'>
-                                        <button type='submit' class='edit-button'>Edit</button>
-                                    </form>
-                                    <form method='post' action='delete_task.php'>
-                                        <input type='hidden' name='task_id' value='{$row['id']}'>
-                                        <button type='submit' class='delete-button'>Delete</button>
-                                    </form>
+                                <div class='task-description $class'>
+                                    " . nl2br(htmlspecialchars(substr($row['description'], 0, 255))) . "
+                                </div>
+                                <div class='task-bottom-row'>
+                                    <div class='task-time'>
+                                        <i class='far fa-clock'></i> $created_at
+                                    </div>
+                                    <div class='task-buttons-right'>
+                                        <form method='get' action='edit_task.php'>
+                                            <input type='hidden' name='task_id' value='{$row['id']}'>
+                                            <button type='submit' class='edit-button'>Edit</button>
+                                        </form>
+                                        <form method='post' action='delete_task.php'>
+                                            <input type='hidden' name='task_id' value='{$row['id']}'>
+                                            <button type='submit' class='delete-button'>Delete</button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </li>";
-                }
-                $stmt->close();
-                ?>
-            </ul>
+                        </li>";
+                    }
+                    ?>
+                </ul>
+            </div>
         </div>
         <form method="post" action="logout.php" style="text-align: center;">
             <button type="submit" class="logout-button">Logout</button>
         </form>
-    </div>
     
     <!-- Obsługa zaznaczania i odznaczania zadań -->
     <script>
@@ -223,5 +247,141 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
         }
     </script>
 
+    <!-- Animacja przesuwania zadań przy zaznaczeniu (zrobione na dół)-->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const taskList = document.getElementById('task-list');
+            
+            document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const taskId = this.dataset.id;
+                    const isChecked = this.checked ? 1 : 0;
+                    const taskItem = this.closest('li');
+                    
+                    // Dodajemy animację
+                    taskItem.style.transition = "all 0.3s ease";
+                    taskItem.style.opacity = "0.6";
+                    
+                    setTimeout(() => {
+                        // Wysyłamy żądanie AJAX do serwera
+                        fetch('update_task_status.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `id=${taskId}&is_done=${isChecked}`
+                        })
+                        .then(response => response.text())
+                        .then(() => {
+                            // Aktualizujemy status zadania
+                            taskItem.dataset.status = isChecked;
+                            
+                            // Dodajemy/usuwaemy klasę task-completed
+                            const taskTitle = taskItem.querySelector('.task-title');
+                            const taskDesc = taskItem.querySelector('.task-description');
+                            
+                            if (isChecked) {
+                                taskTitle.classList.add('task-completed');
+                                taskDesc.classList.add('task-completed');
+                                
+                                // Przenosimy zadanie na koniec listy
+                                taskList.appendChild(taskItem);
+                            } else {
+                                taskTitle.classList.remove('task-completed');
+                                taskDesc.classList.remove('task-completed');
+                                
+                                // Przenosimy zadanie na początek listy
+                                const firstPending = document.querySelector('li[data-status="0"]');
+                                if (firstPending) {
+                                    taskList.insertBefore(taskItem, firstPending);
+                                } else {
+                                    taskList.prepend(taskItem);
+                                }
+                            }
+                            
+                            // Przywracamy pełną widoczność
+                            taskItem.style.opacity = "1";
+                        });
+                    }, 300);
+                });
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicjalizacja liczników
+            updateTaskCounters();
+            
+            // Obsługa checkboxów
+            document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const taskId = this.dataset.id;
+                    const isChecked = this.checked;
+                    const taskItem = this.closest('li');
+                    
+                    // Animacja
+                    taskItem.style.transition = "all 0.3s ease";
+                    taskItem.style.opacity = "0.5";
+                    
+                    setTimeout(() => {
+                        fetch('update_task_status.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `id=${taskId}&is_done=${isChecked ? 1 : 0}`
+                        })
+                        .then(() => {
+                            // Przenieś zadanie do odpowiedniej sekcji
+                            const targetList = isChecked 
+                                ? document.getElementById('completed-tasks')
+                                : document.getElementById('pending-tasks');
+                            
+                            // Aktualizacja klasy
+                            const taskTitle = taskItem.querySelector('.task-title');
+                            const taskDesc = taskItem.querySelector('.task-description');
+                            
+                            if (isChecked) {
+                                taskTitle.classList.add('task-completed');
+                                taskDesc.classList.add('task-completed');
+                            } else {
+                                taskTitle.classList.remove('task-completed');
+                                taskDesc.classList.remove('task-completed');
+                            }
+                            
+                            targetList.appendChild(taskItem);
+                            taskItem.style.opacity = "1";
+                            updateTaskCounters();
+                        });
+                    }, 300);
+                });
+            });
+            
+            // Funkcja aktualizująca liczniki
+            function updateTaskCounters() {
+                document.getElementById('pending-count').textContent = 
+                    document.querySelectorAll('#pending-tasks li').length;
+                document.getElementById('completed-count').textContent = 
+                    document.querySelectorAll('#completed-tasks li').length;
+            }
+            
+            // Obsługa localStorage dla stanu sekcji
+            if (localStorage.getItem('pendingCollapsed') === 'true') {
+                toggleSection('pending', false);
+            }
+            if (localStorage.getItem('completedCollapsed') === 'true') {
+                toggleSection('completed', false);
+            }
+        });
+
+        // Funkcja do rozwijania/zwijania sekcji
+        function toggleSection(section, saveToStorage = true) {
+            const list = document.getElementById(`${section}-tasks`);
+            const icon = document.querySelector(`#${section}-tasks + .section-header .toggle-icon`);
+            
+            list.classList.toggle('collapsed');
+            
+            if (saveToStorage) {
+                localStorage.setItem(`${section}Collapsed`, list.classList.contains('collapsed'));
+            }
+        }
+        </script>
 </body>
 </html>

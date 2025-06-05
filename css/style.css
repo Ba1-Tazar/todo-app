@@ -11,18 +11,3 @@ body, html {
     align-items: center;
 }
 
-#sides_cover {
-    justify-content: center;
-    align-items: center;
-    display: flex;
-    margin-top: 1%;
-    width: 100%;
-    height: 10%;
-}
-
-.sides {
-    width: 30%;
-    justify-content: center;
-    text-align: center;
-}
-
