@@ -52,10 +52,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8" />
     <title>Login</title>
     <link rel="stylesheet" href="../css/style.css" />
-    <link rel="stylesheet" href="../css/login.css" />
+    <link rel="stylesheet" href="../css/register+login.css" />
 </head>
 <body>
-    <h1 id="header">Todo App</h1>
+    <div>
+        <h1 id="header">Todo App</h1>
+    </div>
     <div id="sides_cover">
 
         <!-- Left -->
@@ -65,7 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div id="form_background">
             <div>
                 <div class="container">
-                    <h2>Login</h2>
+                    <h2 style="color: white;">Login</h2>
                 </div>
                 <form method="post" action="">
                     <div class="container">
@@ -82,7 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <p style="color: red; text-align: center;"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
                 <div class="container" style="text-align: center;">
-                    <p style="text-align: center;">Don't have an account? <a href="register.php">Sign up</a></p>
+                    <p style="text-align: center; color: white;">Don't have an account? <a href="register.php" style="color: blue;"><br>Sign up</a></p>
                 </div>
             </div>
         </div>

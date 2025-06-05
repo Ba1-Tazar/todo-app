@@ -1,32 +1,40 @@
 <?php
 session_start();
-
 require_once 'includes/db.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
-    $title = trim($_POST['title']);
-    $user_id = $_SESSION['user_id'];
-
-    if (!empty($title)) {
-        $stmt = $conn->prepare("INSERT INTO tasks (user_id, title) VALUES (?, ?)");
-        $stmt->bind_param("is", $user_id, $title);
-        $stmt->execute();
-        $stmt->close();
-    }
-
-    header("Location: dashboard.php");
-    exit;
-
-}
-
-
-// Sprawdź, czy użytkownik jest zalogowany
 if (!isset($_SESSION['username'])) {
     header("Location: auth/login.php");
     exit;
 }
 
 $username = $_SESSION['username'];
+$error = null;
+
+// Obsługa dodawania nowego zadania
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
+    $title = trim($_POST['title']);
+    $description = trim($_POST['description'] ?? '');
+    $user_id = $_SESSION['user_id'];
+    
+    // Walidacja
+    if (empty($title)) {
+        $error = "Title cannot be empty";
+    } elseif (mb_strlen($title) > 60) {
+        $error = "Title cannot exceed 60 characters";
+    } elseif (mb_strlen($description) > 300) {
+        $error = "Description cannot exceed 300 characters";
+    } else {
+        $stmt = $conn->prepare("INSERT INTO tasks (user_id, title, description) VALUES (?, ?, ?)");
+        $stmt->bind_param("iss", $user_id, $title, $description);
+        
+        if ($stmt->execute()) {
+            header("Location: dashboard.php");
+            exit();
+        } else {
+            $error = "Error adding task: " . $conn->error;
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -34,38 +42,186 @@ $username = $_SESSION['username'];
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/dashboard.css">
 </head>
 <body>
-    <h2>Welcome, <?php echo htmlspecialchars($username); ?>!</h2>
-    <p></p>
+
+    <div class="container">
+        <h2 style="font-size: 30px;">Welcome, <?php echo htmlspecialchars($username); ?>!</h2>
+
+        <div class="task-form">
+            <h3>Add new task</h3>
+            <?php if ($error): ?>
+                <div class="error-message"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
+            <form method="post">
+                <!-- Title -->
+                <div class="form-group">
+                    <input type="text" name="title" maxlength="60" id="task-title-input" 
+                        placeholder="Task title (max 60 chars)" required
+                        value="<?= isset($_POST['title']) ? htmlspecialchars($_POST['title']) : '' ?>">
+                    <div class="char-counter title-char-counter">
+                        <span id="title-char-count"><?= isset($_POST['title']) ? mb_strlen($_POST['title']) : 0 ?></span>/60
+                    </div>
+                </div>
+                <!-- Description -->
+                <div class="form-group textarea-group">
+                    <textarea name="description" id="task-description-input" 
+                            placeholder="Description (max 300 chars)" rows="3" 
+                            maxlength="300"></textarea>
+                    <div class="char-counter desc-char-counter">
+                        <span id="desc-char-count">0</span>/300
+                    </div>
+                </div>
+                <!-- Add button -->
+                <button type="submit">Add</button>
+            </form>
+        </div>
+
+        <div class="task-list-wrapper">
+            <h3>Your Tasks:</h3>
+            <ul id="task-list">
+                <?php
+                $stmt = $conn->prepare("SELECT id, title, description, is_done, created_at FROM tasks WHERE user_id = ? ORDER BY created_at DESC");
+                $stmt->bind_param("i", $_SESSION['user_id']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                while ($row = $result->fetch_assoc()) {
+                    $checked = $row['is_done'] ? "checked" : "";
+                    $class = $row['is_done'] ? "task-completed" : "";
+                    $created_at = date('d.m.Y H:i', strtotime($row['created_at'])); // Nowy format daty
+                    
+                    echo "<li>
+                        <div class='task-item'>
+                            <!-- Tytuł i checkbox -->
+                            <div class='task-title-wrapper'>
+                                <input type='checkbox' class='task-checkbox' data-id='{$row['id']}' $checked>
+                                <span class='task-title $class'>" . htmlspecialchars($row['title']) . "</span>
+                            </div>
+
+                            <!-- Opis -->
+                            <div class='task-description $class'>
+                                " . nl2br(htmlspecialchars(substr($row['description'], 0, 255))) . "
+                            </div>
+
+                            <!-- Nowy kontener na dolną linię -->
+                            <div class='task-bottom-row'>
+                                <!-- Czas dodania -->
+                                <div class='task-time'>
+                                    <i class='far fa-clock'></i> $created_at
+                                </div>
+                                
+                                <!-- Przyciski (zachowana prawa strona) -->
+                                <div class='task-buttons-right'>
+                                    <form method='get' action='edit_task.php'>
+                                        <input type='hidden' name='task_id' value='{$row['id']}'>
+                                        <button type='submit' class='edit-button'>Edit</button>
+                                    </form>
+                                    <form method='post' action='delete_task.php'>
+                                        <input type='hidden' name='task_id' value='{$row['id']}'>
+                                        <button type='submit' class='delete-button'>Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </li>";
+                }
+                $stmt->close();
+                ?>
+            </ul>
+        </div>
+        <form method="post" action="logout.php" style="text-align: center;">
+            <button type="submit" class="logout-button">Logout</button>
+        </form>
+    </div>
     
-    <h3>Add new task</h3>
-    <form method="post">
-        <input type="text" name="title" placeholder="Treść zadania" required>
-        <button type="submit">Add</button>
-    </form>
+    <!-- Obsługa zaznaczania i odznaczania zadań -->
+    <script>
+        document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            const taskId = this.dataset.id;
+            const isChecked = this.checked ? 1 : 0;
 
-    <h3>Your Tasks:</h3>
-    <ul id="task-list">
-        <?php
-        $stmt = $conn->prepare("SELECT id, title, is_done FROM tasks WHERE user_id = ? ORDER BY created_at DESC");
-        $stmt->bind_param("i", $_SESSION['user_id']);
-        $stmt->execute();
-        $result = $stmt->get_result();
+            const taskText = this.nextElementSibling;
+            taskText.classList.toggle('task-completed', isChecked);
 
-        while ($row = $result->fetch_assoc()) {
-            $checked = $row['is_done'] ? "checked" : "";
-            echo "<li>
-                <input type='checkbox' class='task-checkbox' data-id='{$row['id']}' $checked>
-                <span>" . htmlspecialchars($row['title']) . "</span>
-            </li>";
+            // Dodane: Znajdź element opisu i zastosuj tę samą klasę
+            const taskDescription = this.closest('.task-item').querySelector('.task-description');
+            if (taskDescription) {
+                taskDescription.classList.toggle('task-completed', isChecked);
+            }
+
+            fetch('update_task_status.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${taskId}&is_done=${isChecked}`
+            });
+        });
+    });
+    </script>
+
+    <!-- Edytowanie Zadań -->
+    <script>
+        document.querySelectorAll('.edit-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const id = this.dataset.id;
+                const span = document.querySelector(`.task-title[data-id="${id}"]`);
+                const currentText = span.textContent;
+
+                // Stwórz input
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentText;
+                input.classList.add('edit-input');
+
+                // Zastąp tekst polem input
+                span.replaceWith(input);
+                this.textContent = 'Save';
+
+                this.addEventListener('click', function saveEdit() {
+                    const newText = input.value;
+
+                    fetch('update_task_title.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `id=${id}&title=${encodeURIComponent(newText)}`
+                    }).then(() => {
+                        const newSpan = document.createElement('span');
+                        newSpan.className = 'task-title';
+                        newSpan.dataset.id = id;
+                        newSpan.textContent = newText;
+                        input.replaceWith(newSpan);
+                        this.textContent = 'Edit';
+                        this.removeEventListener('click', saveEdit);
+                    });
+                }, { once: true });
+            });
+        });
+    </script>
+
+    <script>
+        // Licznik dla tytułu
+        const titleInput = document.getElementById('task-title-input');
+        const titleCounter = document.getElementById('title-char-count');
+        if (titleInput) {
+            titleInput.addEventListener('input', () => {
+                titleCounter.textContent = titleInput.value.length;
+                titleInput.nextElementSibling.classList.toggle('warning', titleInput.value.length > 50);
+            });
         }
 
-        $stmt->close();
-        ?>
-    </ul>
+        // Licznik dla opisu
+        const descInput = document.getElementById('task-description-input');
+        const descCounter = document.getElementById('desc-char-count');
+        if (descInput) {
+            descInput.addEventListener('input', () => {
+                descCounter.textContent = descInput.value.length;
+                descInput.nextElementSibling.classList.toggle('warning', descInput.value.length > 270);
+            });
+        }
+    </script>
 
-    <p><a href="logout.php">Logout</a></p>
 </body>
 </html>

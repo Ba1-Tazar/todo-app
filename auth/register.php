@@ -84,23 +84,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8" />
     <title>Registration</title>
     <link rel="stylesheet" href="../css/style.css" />
-    <link rel="stylesheet" href="../css/register.css" />
+    <link rel="stylesheet" href="../css/register+login.css" />
 </head>
 <body>
-    <h1 id="header">Todo App</h1>
+    <div>
+        <h1 id="header">Todo App</h1>
+    </div>
     <div id="sides_cover">
         <div class="sides"></div>
         <div id="form_background">
             <div>
                 <div class="container">
-                    <h2>Registration</h2>
+                    <h2 style="color: #05558F;">Registration</h2>
                 </div>
                 <form method="post" action="">
                     <div class="container">
-                        <input type="text" name="username" placeholder="Username" required value="<?php echo isset($username) ? htmlspecialchars($username) : ''; ?>" />
+                        <input type="text" name="username" id="test" placeholder="Username" required value="<?php echo isset($username) ? htmlspecialchars($username) : ''; ?>" />
                     </div>
                     <div class="container">
-                        <input type="password" name="password" placeholder="Password" required />
+                        <input type="password" name="password" id="test" placeholder="Password" required />
                     </div>
                     <div class="container">
                         <button type="submit">Register</button>
@@ -114,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <script>
                             setTimeout(function () {
                                 window.location.href = "login.php";
-                            }, 2000); // 2000 ms = 2 sekundy
+                            }, 3000); // 3000 ms = 3 sekundy
                         </script>
                     <?php endif; ?>
                     <?php if ($error || $success): ?>
@@ -125,7 +127,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </script>
                     <?php endif; ?>
                 <div class="container" style="text-align: center;">
-                    <p>Already have an account? <a href="login.php">Log in</a></p>
+                    <p style="color: #05558F;">Already have an account? <a href="login.php" style="color: blue;"><br>Log in</a></p>
                 </div>
             </div>
         </div>
