@@ -86,7 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
             <!-- Sekcja Niezrobionych Zadań -->
             <div class="task-section" id="task-section-left">
                 <div class="section-header" onclick="toggleSection('pending')">
-                    <h4>Do zrobienia (<span id="pending-count">0</span>)</h4>
+                    <h4>To do (<span id="pending-count">0</span>)</h4>
                     <span class="toggle-icon">▼</span>
                 </div>
                 <ul id="pending-tasks" class="task-list">
@@ -107,7 +107,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
             <!-- Sekcja Zrobionych Zadań -->
             <div class="task-section" id="task-section-right">
                 <div class="section-header" onclick="toggleSection('completed')">
-                    <h4>Zrobione (<span id="completed-count">0</span>)</h4>
+                    <h4>Completed (<span id="completed-count">0</span>)</h4>
                     <span class="toggle-icon">▼</span>
                 </div>
                 <ul id="completed-tasks" class="task-list">

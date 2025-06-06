@@ -187,7 +187,8 @@ body {
 
 #task-list li.completed,
 .task-completed {
-    background-color: #727272;
+    background-color: #a5a5a5;
+    border-radius: 4px;
     opacity: 0.7;
     color: gray;
     text-decoration: line-through;
