@@ -3,7 +3,7 @@ $host = 'localhost';
 $db   = 'todo_app';
 $user = 'root';
 $pass = '';     
-$port = 3307;
+$port = 3306;
 $charset = 'utf8mb4';
 
 // Połączenie z bazą

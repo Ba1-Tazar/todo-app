@@ -10,9 +10,7 @@
     <header>
         <div class="logo">TodoApp</div>
         <nav>
-            <a href="#features">Features</a>
-            <a href="#about">About</a>
-            <a href="auth/login.php">Login</a>
+            <a href="auth/login.php" style="margin-right: 20px;">Login</a>
         </nav>
     </header>
     
@@ -20,8 +18,7 @@
         <h1>Organize Your Life</h1>
         <p>Simple, beautiful task management to help you stay productive and stress-free. Access your todos anywhere, anytime.</p>
         <div>
-            <a href="auth/register.php" class="btn">Get Started - It's Free</a>
-            <a href="#demo" class="btn btn-outline">See Demo</a>
+            <a href="auth/register.php" class="btn btn-outline">Get Started - It's Free</a>
         </div>
     </main>
     
