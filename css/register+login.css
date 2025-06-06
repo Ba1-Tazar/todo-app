@@ -1,14 +1,31 @@
+/* Base Styles */
+body, html {
+    background-image: url(../images/bg2.webp);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+}
 
+/* Container Styles */
 .container {
-    margin: 5%;
+    margin: 5% auto;
     display: flex;
     justify-content: center;
     align-items: center;
     width: fit-content;
-    margin: 0 auto;
     color: #ffffff;
+    margin-bottom: 1rem;
+    width: 100%;
 }
 
+#cover {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Header Styles */
 #header {
     align-items: center;
     text-align: center;
@@ -20,12 +37,13 @@
     font-weight: bold;
 }
 
-#header a{
+#header a {
     color: #05558F;
     font-weight: bold;
     text-decoration: none;
 }
 
+/* Form Styles */
 #form_background {
     margin-top: 20px;
     max-width: 700px;
@@ -39,9 +57,18 @@
     background-color: #43b4cd67;
     border-radius: 16px;
     box-shadow: 0 0 10px rgba(0, 255, 221, 0.377);
-    font-size: 0.5vw;
 }
 
+#form_container {
+    max-width: 400px;
+    width: 400px;
+}
+
+#registerForm {
+    max-width: 400px;
+}
+
+/* Typography */
 #form_background h2 {
     font-size: clamp(20px, 2vw, 30px);
 }
@@ -50,14 +77,15 @@
     font-size: clamp(14px, 2vw, 20px);
 }
 
-body, html {
-    background-image: url(../images/bg2.webp);
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-attachment: fixed;
+h2 {
+    font-size: clamp(18px, 3vw, 32px);
 }
 
+.container p, .container a {
+    font-size: clamp(14px, 2vw, 18px);
+}
+
+/* Input & Button Styles */
 input[type="text"],
 input[type="password"],
 input[type="email"],
@@ -65,13 +93,19 @@ button {
     background-color: #d3f4ff9d;
     border: 1px solid #35bdb665;
     border-radius: 6px;
-    width: 100%;           
-    font-size: 1rem;       
-    padding: 10px;
+    width: 100%;
+    font-size: clamp(14px, 2vw, 16px);
+    padding: 10px 12px;
     box-sizing: border-box;
     margin-bottom: 12px;
     transition: border-color 0.4s, box-shadow 0.4s;
 }
+
+input[type="text"],
+input[type="password"] {
+    border: 1px solid #007497;
+}
+
 button {
     background-color: #05558F;
     color: rgb(255, 255, 255);
@@ -84,6 +118,9 @@ button:hover {
     background-color: #357abd;
 }
 
+button[type="submit"]:hover {
+    background-color: #033b6d;
+}
 
 input:focus {
     border-color: #4a90e2;
@@ -91,31 +128,11 @@ input:focus {
     outline: none;
 }
 
-#password_strength {
-    margin: 10px 0;
-    height: 5px;
-    background: #ddd;
-    width: 100%;
-    border-radius: 4px;
-    overflow: hidden;
-    flex-grow: 1;
-}
-#password_strength_bar {
-    height: 100%;
-    width: 0%;
-    background: red;
-    transition: all 0.3s;
-    height: 8px;
-    background-color: #e0e0e0;
-    border-radius: 4px;
-    transition: all 0.3s ease;
-}
-
-/* Komunikaty */
-#password_match {
-    color: #dc3545;
-    font-size: 0.8em;
-    display: none;
+/* Password Container Styles */
+.password-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .password-feedback {
@@ -125,7 +142,26 @@ input:focus {
     gap: 8px;
 }
 
-/* Podpowiedzi do hasła */
+/* Password Strength Meter */
+#password_strength {
+    margin: 10px 0;
+    height: 5px;
+    background: #ddd;
+    width: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+#password_strength_bar {
+    height: 8px;
+    width: 0%;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+/* Password Hints */
 .password-hints {
     font-size: 0.65vw;
     color: #666;
@@ -149,33 +185,35 @@ input:focus {
     color: #dc3545;
 }
 
-#cover {
+/* Show Password Checkbox */
+.show-password-container {
     display: flex;
-    justify-content: center;
     align-items: center;
+    gap: 8px;
+    margin-top: -10px;
+    margin-left: 5px;
 }
 
-.container {
-    margin-bottom: 1rem;
-    width: 100%;
+.show-password-container input[type="checkbox"] {
+    margin: 0;
+    width: 18px;
+    height: 18px;
 }
 
-input[type="text"],
-input[type="password"] {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #007497;
-    border-radius: 6px;
-    font-size: 16px;
-    box-sizing: border-box;
+.show-password-container label {
+    font-size: clamp(12px, 3vw, 14px);
+    white-space: nowrap;
+    color: #555;
 }
 
-/* Przycisk */
-button[type="submit"]:hover {
-    background-color: #033b6d;
+/* Messages */
+#password_match {
+    color: #dc3545;
+    font-size: 0.8em;
+    display: none;
 }
 
-/* Link do logowania */
+/* Link Styles */
 .container a {
     text-decoration: none;
     font-weight: bold;
@@ -185,46 +223,7 @@ button[type="submit"]:hover {
     text-decoration: underline;
 }
 
-#registerForm {
-    max-width: 400px;
-}
-
-#form_container {
-    max-width: 400px;
-    width: 400px;
-}
-
-/* Dla całego kontenera hasła */
-.password-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-/* Kontener checkboxa */
-.show-password-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: -10px;
-    margin-left: 5px;
-}
-
-/* Sam checkbox */
-.show-password-container input[type="checkbox"] {
-    margin: 0;
-    width: 18px;
-    height: 18px;
-}
-
-/* Tekst obok checkboxa */
-.show-password-container label {
-    font-size: clamp(12px, 3vw, 14px);
-    white-space: nowrap;
-    color: #555;
-}
-
-/* Dla bardzo małych ekranów */
+/* Responsive Styles */
 @media (max-width: 400px) {
     .show-password-container {
         gap: 5px;
@@ -232,16 +231,4 @@ button[type="submit"]:hover {
     .show-password-container label {
         font-size: 12px;
     }
-}
-
-h2 {
-    font-size: clamp(18px, 3vw, 32px);
-}
-
-.container p, .container a {
-    font-size: clamp(14px, 2vw, 18px);
-}
-
-input, button {
-    font-size: clamp(14px, 2vw, 16px);
 }

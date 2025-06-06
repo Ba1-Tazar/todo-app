@@ -1,20 +1,18 @@
+/* ===== GLOBAL STYLES ===== */
 body {
     background-image: url(../images/bg4_space-nebula-3D_3840x2160.webp);
     background-repeat: no-repeat;
     font-family: Arial, sans-serif;
     color: white;
     padding: 20px;
-    margin-top: 10% ;
+    margin-top: 10%;
 }
 
+/* ===== FORM STYLES ===== */
 form {
     max-width: 400px;
     margin: auto;
     padding: 20px;
-    text-align: center;
-}
-
-#header h1{
     text-align: center;
 }
 
@@ -23,21 +21,12 @@ form {
     margin: 0 auto;
     background-color: rgba(72, 209, 205, 0.123);
     border: 4px solid rgba(2, 185, 170, 0.651);
-    border-radius: 8px ;
+    border-radius: 8px;
     padding: 20px;
     text-align: center;
-    
 }
 
-#cancel-edit a{
-    display: inline-block;
-    max-width: fit-content;
-    color: rgb(0, 255, 221);
-    text-decoration: none;
-    text-align: center;
-    border-radius: 5px;
-}
-
+/* ===== INPUT FIELDS ===== */
 input[type="text"], textarea {
     width: 100%;
     padding: 10px;
@@ -52,22 +41,37 @@ textarea {
     resize: none;
     min-height: 100px;
 }
+
+/* ===== BUTTONS & LINKS ===== */
 button, a {
     padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
 }
+
 button {
     background-color: #4CAF50;
     color: white;
     border: none;
     margin-bottom: -40px;
-
 }
 
 button:hover {
     background: #0b5e00;
-    cursor: pointer;
+}
+
+#cancel-edit a {
+    display: inline-block;
+    max-width: fit-content;
+    color: rgb(0, 255, 221);
+    text-decoration: none;
+    text-align: center;
+    border-radius: 5px;
+}
+
+/* ===== TEXT STYLES ===== */
+#header h1 {
+    text-align: center;
 }
 
 .char-counter {

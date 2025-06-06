@@ -79,11 +79,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
             </form>
         </div>
 
+        <h3>Your Tasks:</h3>
         <div class="task-list-wrapper">
-            <h3>Your Tasks:</h3>
+            
             
             <!-- Sekcja Niezrobionych Zadań -->
-            <div class="task-section">
+            <div class="task-section" id="task-section-left">
                 <div class="section-header" onclick="toggleSection('pending')">
                     <h4>Do zrobienia (<span id="pending-count">0</span>)</h4>
                     <span class="toggle-icon">▼</span>
@@ -104,7 +105,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
             </div>
             
             <!-- Sekcja Zrobionych Zadań -->
-            <div class="task-section">
+            <div class="task-section" id="task-section-right">
                 <div class="section-header" onclick="toggleSection('completed')">
                     <h4>Zrobione (<span id="completed-count">0</span>)</h4>
                     <span class="toggle-icon">▼</span>
@@ -274,7 +275,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
                             // Aktualizujemy status zadania
                             taskItem.dataset.status = isChecked;
                             
-                            // Dodajemy/usuwaemy klasę task-completed
+                            // Dodajemy/usuwamy klasę task-completed
                             const taskTitle = taskItem.querySelector('.task-title');
                             const taskDesc = taskItem.querySelector('.task-description');
                             
@@ -383,5 +384,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
             }
         }
         </script>
+
+
+
 </body>
 </html>
