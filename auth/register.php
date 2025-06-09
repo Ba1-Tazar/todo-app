@@ -54,9 +54,11 @@ $success = "";
 $username = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    
     // Validate CSRF token
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die("CSRF token validation failed.");
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        http_response_code(403);
+        die("Błąd CSRF - niedozwolone żądanie.");
     }
 
     // Update rate limiting - tylko jeśli katalog jest dostępny do zapisu

@@ -2,6 +2,11 @@
 session_start();
 require_once '../includes/db.php';
 
+// Generate CSRF token if not exists - Zawsze na początku, niezależnie od metody
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 // Initialize variables
 $error = "";
 $username = "";
@@ -13,12 +18,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $token = $_POST['csrf_token'] ?? '';
 
     // Validate CSRF token
-    if (empty($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    }
-    
-    if (!hash_equals($_SESSION['csrf_token'], $token)) {
-        $error = "Security error. Please try again.";
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        http_response_code(403);
+        die("Błąd CSRF - niedozwolone żądanie.");
     }
     // Rate limiting (max 5 attempts in 5 minutes)
     elseif ($login_attempts >= 5 && time() - ($_SESSION['last_attempt_time'] ?? 0) < 300) {
@@ -41,22 +43,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($stmt->num_rows === 1) {
                 $stmt->bind_result($user_id, $hashed_password, $is_locked);
                 $stmt->fetch();
-                
-                // Check if account is locked
+
                 if ($is_locked) {
                     $error = "Account locked. Please contact support.";
-                }
-                // Verify password
-                elseif (password_verify($password, $hashed_password)) {
-                    // Successful login - reset attempts
+                } elseif (password_verify($password, $hashed_password)) {
+                    // Successful login
                     $_SESSION['login_attempts'] = 0;
                     $_SESSION['user_id'] = $user_id;
                     $_SESSION['username'] = $username;
                     $_SESSION['last_login'] = time();
-                    
-                    // Regenerate session ID to prevent fixation
+
+                    // Regenerate session ID
                     session_regenerate_id(true);
-                    
+
                     $stmt->close();
                     $conn->close();
 
@@ -66,8 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $error = "Incorrect username or password.";
                     $_SESSION['login_attempts'] = ++$login_attempts;
                     $_SESSION['last_attempt_time'] = time();
-                    
-                    // Lock account after 5 failed attempts
+
                     if ($login_attempts >= 5) {
                         $lock_stmt = $conn->prepare("UPDATE users SET is_locked = 1 WHERE username = ?");
                         $lock_stmt->bind_param("s", $username);
@@ -86,11 +84,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
     $conn->close();
-}
-
-// Generate CSRF token if not exists
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 ?>
 <!DOCTYPE html>

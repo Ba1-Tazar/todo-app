@@ -214,6 +214,11 @@ body {
     width: 100%;
 }
 
+.task-title-wrapper span{
+    word-break: break-word;
+}
+
+
 .task-checkbox {
     transform: scale(1.6);
     margin-right: 12px;

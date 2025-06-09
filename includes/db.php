@@ -11,6 +11,6 @@ $conn = new mysqli($host, $user, $pass, $db, $port);
 
 // Sprawdzenie błędów
 if ($conn->connect_error) {
-    die('Błąd połączenia z bazą danych: ' . $conn->connect_error);
+    die('Błąd połączenia z bazą danych: ');
 }
 ?>

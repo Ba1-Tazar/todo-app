@@ -2,6 +2,21 @@
 session_start();
 require_once 'includes/db.php';
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+$timeout = 1800; // 30 minut
+
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $timeout)) {
+    session_unset();
+    session_destroy();
+    header("Location: auth/login.php");
+    exit();
+}
+
+$_SESSION['last_activity'] = time();
+
 if (!isset($_SESSION['username'])) {
     header("Location: auth/login.php");
     exit;
@@ -12,6 +27,12 @@ $error = null;
 
 // Obsługa dodawania nowego zadania
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
+
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        http_response_code(403);
+        die("Błąd CSRF - niedozwolone żądanie.");
+    }
+
     $title = trim($_POST['title']);
     $description = trim($_POST['description'] ?? '');
     $user_id = $_SESSION['user_id'];
@@ -57,6 +78,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
             <?php endif; ?>
             <form method="post">
                 <!-- Title -->
+                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 <div class="form-group">
                     <input type="text" name="title" maxlength="60" id="task-title-input" 
                         placeholder="Task title (max 60 chars)" required
@@ -126,27 +148,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
                         $checked = $row['is_done'] ? "checked" : "";
                         $class = $row['is_done'] ? "task-completed" : "";
                         $created_at = date('d.m.Y H:i', strtotime($row['created_at']));
-                        
-                        echo "<li data-id='{$row['id']}'>
+                        $title = htmlspecialchars($row['title']);
+                        $desc = nl2br(htmlspecialchars(substr($row['description'], 0, 255)));
+                        $task_id = $row['id'];
+                        $csrf = $_SESSION['csrf_token'];
+
+                        echo "
+                        <li data-id='$task_id'>
                             <div class='task-item'>
                                 <div class='task-title-wrapper'>
-                                    <input type='checkbox' class='task-checkbox' data-id='{$row['id']}' $checked>
-                                    <span class='task-title $class'>" . htmlspecialchars($row['title']) . "</span>
+                                    <input type='checkbox' class='task-checkbox' data-id='$task_id' $checked>
+                                    <span class='task-title $class'>$title</span>
                                 </div>
-                                <div class='task-description $class'>
-                                    " . nl2br(htmlspecialchars(substr($row['description'], 0, 255))) . "
-                                </div>
+                                <div class='task-description $class'>$desc</div>
                                 <div class='task-bottom-row'>
                                     <div class='task-time'>
                                         <i class='far fa-clock'></i> $created_at
                                     </div>
                                     <div class='task-buttons-right'>
                                         <form method='get' action='edit_task.php'>
-                                            <input type='hidden' name='task_id' value='{$row['id']}'>
+                                            <input type='hidden' name='task_id' value='$task_id'>
                                             <button type='submit' class='edit-button'>Edit</button>
                                         </form>
                                         <form method='post' action='delete_task.php'>
-                                            <input type='hidden' name='task_id' value='{$row['id']}'>
+                                            <input type='hidden' name='task_id' value='$task_id'>
+                                            <input type='hidden' name='csrf_token' value='$csrf'>
                                             <button type='submit' class='delete-button'>Delete</button>
                                         </form>
                                     </div>
@@ -159,6 +185,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
             </div>
         </div>
         <form method="post" action="logout.php" style="text-align: center;">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
             <button type="submit" class="logout-button">Logout</button>
         </form>
     
@@ -181,7 +208,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
             fetch('update_task_status.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `id=${taskId}&is_done=${isChecked}`
+                body: `id=${taskId}&is_done=${isChecked}&csrf_token=${csrfToken}`
             });
         });
     });
@@ -211,7 +238,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
                     fetch('update_task_title.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `id=${id}&title=${encodeURIComponent(newText)}`
+                        body: `id=${id}&title=${encodeURIComponent(newText)}&csrf_token=${csrfToken}`
                     }).then(() => {
                         const newSpan = document.createElement('span');
                         newSpan.className = 'task-title';
@@ -268,7 +295,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
                         fetch('update_task_status.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: `id=${taskId}&is_done=${isChecked}`
+                            body: `id=${taskId}&is_done=${isChecked}&csrf_token=${csrfToken}`
                         })
                         .then(response => response.text())
                         .then(() => {
@@ -327,7 +354,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
                         fetch('update_task_status.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: `id=${taskId}&is_done=${isChecked ? 1 : 0}`
+                            body: `id=${taskId}&is_done=${isChecked ? 1 : 0}&csrf_token=${csrfToken}`
                         })
                         .then(() => {
                             // Przenieś zadanie do odpowiedniej sekcji
@@ -383,9 +410,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['title'])) {
                 localStorage.setItem(`${section}Collapsed`, list.classList.contains('collapsed'));
             }
         }
-        </script>
-
-
-
+    </script>
+    
+    <script>
+        const csrfToken = '<?= $_SESSION['csrf_token'] ?>';
+    </script>
 </body>
 </html>

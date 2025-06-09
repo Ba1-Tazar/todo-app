@@ -2,6 +2,21 @@
 session_start();
 require_once 'includes/db.php';
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+$timeout = 1800; // 30 minut
+
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $timeout)) {
+    session_unset();
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+
+$_SESSION['last_activity'] = time();
+
 $user_id = $_SESSION['user_id'] ?? null;
 if (!$user_id) {
     header("Location: login.php");
@@ -12,6 +27,12 @@ $error = null;
 $task = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['title'])) {
+
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        http_response_code(403);
+        die("Błąd CSRF - niedozwolone żądanie.");
+    }
+
     // Aktualizacja zadania
     $task_id = (int)$_POST['task_id'];
     $title = trim($_POST['title']);
@@ -74,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['ti
 
         <form method="post" action="edit_task.php">
             <input type="hidden" name="task_id" value="<?= htmlspecialchars($task_id) ?>">
-            
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
             <div class="form-group">
                 <input type="text" name="title" id="edit-title" 
                        value="<?= htmlspecialchars($task['title']) ?>" 

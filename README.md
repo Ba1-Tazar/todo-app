@@ -98,8 +98,6 @@ todo_app
 
 ## 📸 Screenshots
 
-> Replace these with your own screenshots:
-
 Homepage
 
 

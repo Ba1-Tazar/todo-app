@@ -11,6 +11,7 @@
         <div class="logo">TodoApp</div>
         <nav>
             <a href="auth/login.php" style="margin-right: 20px;">Login</a>
+            <a href="auth/register.php" style="margin-right: 20px;">Register</a>
         </nav>
     </header>
     
